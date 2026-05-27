@@ -7,19 +7,18 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.smartstudyai.ui.screens.HomeScreen // 👈 WE ADDED THIS IMPORT RIGHT HERE!
+import com.example.smartstudyai.ui.theme.screens.HomeScreen
+import com.example.smartstudyai.ui.theme.PrimaryBlue
 
 @Composable
 fun MainScaffold() {
@@ -27,7 +26,6 @@ fun MainScaffold() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Map out the bottom navigation items cleanly
     val menuItems = listOf(
         Triple(Screen.Home.route, Icons.Default.Dashboard, "Dashboard"),
         Triple(Screen.Notes.route, Icons.Default.Description, "Notes"),
@@ -37,13 +35,32 @@ fun MainScaffold() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = Color.White, // Clean slate background context
+                tonalElevation = 8.dp
+            ) {
                 menuItems.forEach { item ->
                     val (route, icon, label) = item
+                    val isSelected = currentRoute == route
+
                     NavigationBarItem(
-                        icon = { Icon(icon, contentDescription = label) },
-                        label = { Text(label) },
-                        selected = currentRoute == route,
+                        icon = {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = label,
+                                tint = if (isSelected) PrimaryBlue else Color.Gray // #2 Dynamic active/inactive colors
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = label,
+                                color = if (isSelected) PrimaryBlue else Color.Gray // #2 Text matches dynamic state
+                            )
+                        },
+                        selected = isSelected,
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = PrimaryBlue.copy(alpha = 0.12f) // #2 Filled soft-purple selection highlight capsule
+                        ),
                         onClick = {
                             if (currentRoute != route) {
                                 navController.navigate(route) {
@@ -58,14 +75,13 @@ fun MainScaffold() {
             }
         }
     ) { paddingValues ->
-        // The structural viewport controller hosting our views
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Home.route) {
-                HomeScreen() // 👈 WE CHANGED THIS LINE TO LAUNCH YOUR HOME SCREEN METRICS!
+                HomeScreen(onFabClick = { /* Handle FAB trigger operations */ })
             }
             composable(Screen.Notes.route) { TemporaryScreenPlaceholder("📝 Notes Workspace View") }
             composable(Screen.Planner.route) { TemporaryScreenPlaceholder("📅 Study Planner View") }
@@ -80,6 +96,6 @@ fun TemporaryScreenPlaceholder(text: String) {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = androidx.compose.ui.Alignment.Center
     ) {
-        Text(text = text, style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
+        Text(text = text, style = MaterialTheme.typography.titleLarge)
     }
 }
