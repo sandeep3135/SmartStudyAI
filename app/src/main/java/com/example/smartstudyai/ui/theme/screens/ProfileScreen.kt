@@ -1,4 +1,4 @@
-package com.example.smartstudyai.ui.screens
+package com.example.smartstudyai.ui.theme.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

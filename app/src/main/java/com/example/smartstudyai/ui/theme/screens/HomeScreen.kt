@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.example.smartstudyai.ui.theme.*
 
 @Composable
-fun HomeScreen(onFabClick: () -> Unit = {}) {
+fun HomeScreen(onFabClick: () -> Unit = {}, onMenuClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -35,7 +35,7 @@ fun HomeScreen(onFabClick: () -> Unit = {}) {
             contentPadding = PaddingValues(top = 16.dp, bottom = 90.dp), // #1: Extra bottom breathing space
             verticalArrangement = Arrangement.spacedBy(24.dp) // #1: Increased whitespace separation between sections
         ) {
-            // 👤 1. USER PROFILE SECTION
+            // 👤 1. RESTORED USER PROFILE ROW WITH ELEVATED RIGHT TRIGGER MENU BADGE
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -46,36 +46,58 @@ fun HomeScreen(onFabClick: () -> Unit = {}) {
                         modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // ✅ PERFECTLY RESTORED: Profile Person badge icon returns to its rightful left corner spot
                         Box(
                             modifier = Modifier
-                                .size(52.dp)
-                                .background(PrimaryBlue.copy(alpha = 0.15f), CircleShape),
+                                .size(46.dp)
+                                .background(PrimaryBlue.copy(alpha = 0.12f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Person, contentDescription = "Profile", tint = PrimaryBlue, modifier = Modifier.size(26.dp))
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Profile Icon",
+                                tint = PrimaryBlue,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Welcome, Sandeep",
-                                style = MaterialTheme.typography.titleLarge,
+                                text = "Welcome Back, Sandeep",
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = TextDark,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "🔥 5 Day Study Streak", 
-                                style = MaterialTheme.typography.bodyMedium, 
-                                color = Color(0xFFF59E0B), 
+                                text = "🔥 5 Day Study Streak",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFFF59E0B),
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = TextMuted)
+
+                    // ✅ PREMIUM UPGRADE: Elevated Staggered Hamburger Card on the right margin corner
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .shadow(2.dp, RoundedCornerShape(12.dp))
+                            .background(Color.White, RoundedCornerShape(12.dp))
+                            .clickable { onMenuClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MenuOpen,
+                            contentDescription = "Open Slide Menu",
+                            tint = PrimaryBlue,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .background(Color.Transparent) // Force transparency to prevent raw white box clipping
+                        )
                     }
                 }
             }
@@ -149,7 +171,7 @@ fun HomeScreen(onFabClick: () -> Unit = {}) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text("📊 Daily Metrics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDark)
                     Row(
-                        modifier = Modifier.fillMaxWidth(), 
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         MetricCard(modifier = Modifier.weight(1f), title = "Attendance", score = "85%", label = "📈 Up 5%", iconColor = PriorityLow)
@@ -196,7 +218,6 @@ fun HomeScreen(onFabClick: () -> Unit = {}) {
                         Text("Summarize your course modules or instantly generate dynamic mock quizzes.", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            // #5: Highly defined premium contrast buttons featuring deep charcoal typography & soft elevation drops
                             Button(
                                 onClick = {},
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.White),
@@ -220,7 +241,6 @@ fun HomeScreen(onFabClick: () -> Unit = {}) {
         }
 
         // ➕ 8. FLOATING ACTION BUTTON IMPLEMENTATION (#7)
-        
         FloatingActionButton(
             onClick = onFabClick,
             containerColor = PrimaryBlue,
@@ -240,24 +260,38 @@ fun HomeScreen(onFabClick: () -> Unit = {}) {
     }
 }
 
-// Custom Reusable Sub-Component for Quick Action Items (#6)
+// Custom Reusable Sub-Component for Quick Action Items (#6) - PREMIUM ALIGNED EDITION
 @Composable
 fun QuickActionItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable {}.padding(4.dp)
+        modifier = Modifier
+            .clickable { /* Action trigger */ }
+            .padding(4.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
-                .background(Color.White, RoundedCornerShape(14.dp))
-                .shadow(1.dp, RoundedCornerShape(14.dp)),
+                .size(54.dp)
+                .shadow(2.dp, RoundedCornerShape(14.dp)) // Added clean uniform shadow depth drop
+                .background(Color.White, RoundedCornerShape(14.dp)), // Unified solid premium card base surface
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = label, tint = PrimaryBlue, modifier = Modifier.size(24.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = PrimaryBlue,
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(Color.Transparent) // Completely eliminates separate box clipping lines
+            )
         }
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(label, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = TextDark)
+        Spacer(modifier = Modifier.height(8.dp)) // Sleek whitespace breathing space
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            color = TextDark
+        )
     }
 }
 
@@ -275,17 +309,17 @@ fun MetricCard(modifier: Modifier, title: String, score: String, label: String, 
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                title, 
-                style = MaterialTheme.typography.labelSmall, 
-                color = TextMuted, 
+                title,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextMuted,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                score, 
-                style = MaterialTheme.typography.titleMedium, 
-                fontWeight = FontWeight.ExtraBold, 
+                score,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
                 color = TextDark,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -296,9 +330,9 @@ fun MetricCard(modifier: Modifier, title: String, score: String, label: String, 
                     .padding(horizontal = 4.dp, vertical = 2.dp)
             ) {
                 Text(
-                    label, 
-                    style = MaterialTheme.typography.labelSmall, 
-                    color = iconColor, 
+                    label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = iconColor,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

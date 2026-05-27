@@ -65,7 +65,7 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "StudyFlow AI",
+                text = "SmartStudy AI",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White
