@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.smartstudyai.ui.screens.HomeScreen // 👈 WE ADDED THIS IMPORT RIGHT HERE!
 
 @Composable
 fun MainScaffold() {
@@ -63,7 +64,9 @@ fun MainScaffold() {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(Screen.Home.route) { TemporaryScreenPlaceholder("🏠 Home Dashboard View") }
+            composable(Screen.Home.route) {
+                HomeScreen() // 👈 WE CHANGED THIS LINE TO LAUNCH YOUR HOME SCREEN METRICS!
+            }
             composable(Screen.Notes.route) { TemporaryScreenPlaceholder("📝 Notes Workspace View") }
             composable(Screen.Planner.route) { TemporaryScreenPlaceholder("📅 Study Planner View") }
             composable(Screen.AIAssistant.route) { TemporaryScreenPlaceholder("🤖 AI Assistant Chat View") }
