@@ -20,6 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.smartstudyai.ui.theme.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 
 @Composable
 fun HomeScreen(onFabClick: () -> Unit = {}, onMenuClick: () -> Unit = {}) {
@@ -240,22 +246,45 @@ fun HomeScreen(onFabClick: () -> Unit = {}, onMenuClick: () -> Unit = {}) {
             }
         }
 
-        // ➕ 8. FLOATING ACTION BUTTON IMPLEMENTATION (#7)
-        FloatingActionButton(
-            onClick = onFabClick,
-            containerColor = PrimaryBlue,
-            contentColor = Color.White,
-            shape = CircleShape,
+        // ➕ 8. FLOATING ACTION BUTTON WITH LIFECYCLE SPRING ANIMATIONS
+        val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+        val isPressed by interactionSource.collectIsPressedAsState()
+
+        // Dynamic scale physics multiplier calculations
+        val fabScale by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (isPressed) 1.15f else 1.0f, // Upscales cleanly by 15% when pressed!
+            animationSpec = androidx.compose.animation.core.spring(
+                dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+            ),
+            label = "FabScaleAnimation"
+        )
+
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 20.dp, bottom = 20.dp)
-                .shadow(6.dp, CircleShape)
         ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Quick Action Fab",
-                modifier = Modifier.size(28.dp)
-            )
+            FloatingActionButton(
+                onClick = onFabClick,
+                interactionSource = interactionSource, // Feeds click events directly to our spring animation calculator
+                containerColor = PrimaryBlue,
+                contentColor = Color.White,
+                shape = CircleShape,
+                modifier = Modifier
+                    .size(56.dp)
+                    .graphicsLayer(
+                        scaleX = fabScale, // Controls horizontal width expansion dynamically
+                        scaleY = fabScale  // Controls vertical height expansion dynamically
+                    )
+                    .shadow(elevation = if (isPressed) 12.dp else 4.dp, shape = CircleShape) // Drop shadow deepens dynamically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Quick Action Fab",
+                    modifier = Modifier.size(26.dp)
+                )
+            }
         }
     }
 }

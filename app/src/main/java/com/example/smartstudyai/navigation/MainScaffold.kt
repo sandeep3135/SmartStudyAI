@@ -156,16 +156,37 @@ fun MainScaffold() {
     ) {
         Scaffold(
             bottomBar = {
-                NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+                NavigationBar(
+                    containerColor = Color.White,
+                    tonalElevation = 8.dp,
+                    // ✅ FIXED: Using window padding instead of a hard box container ensures icons center flawlessly
+                    windowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Bottom)
+                ) {
                     menuItems.forEach { item ->
                         val (route, icon, label) = item
                         val isSelected = currentRoute == route
 
                         NavigationBarItem(
-                            icon = { Icon(icon, contentDescription = label, tint = if (isSelected) PrimaryBlue else Color.Gray) },
-                            label = { Text(label, color = if (isSelected) PrimaryBlue else Color.Gray) },
+                            icon = {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = label,
+                                    tint = if (isSelected) PrimaryBlue else Color.Gray,
+                                    modifier = Modifier.size(22.dp) // Perfectly scaled asset footprint
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (isSelected) PrimaryBlue else Color.Gray,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                )
+                            },
                             selected = isSelected,
-                            colors = NavigationBarItemDefaults.colors(indicatorColor = PrimaryBlue.copy(alpha = 0.12f)),
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = PrimaryBlue.copy(alpha = 0.12f)
+                            ),
                             onClick = {
                                 if (currentRoute != route) {
                                     navController.navigate(route) {
@@ -185,15 +206,78 @@ fun MainScaffold() {
                 startDestination = Screen.Home.route,
                 modifier = Modifier.padding(paddingValues)
             ) {
+                // 🏠 Dashboard
                 composable(Screen.Home.route) {
                     HomeScreen(
                         onFabClick = { /* Handle FAB Action */ },
                         onMenuClick = { scope.launch { drawerState.open() } }
                     )
                 }
-                composable(Screen.Notes.route) { TemporaryScreenPlaceholder("📝 Notes Workspace View") }
+
+                // 📝 Notes Workspace with Premium Empty State Injection
+                composable(Screen.Notes.route) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(AppBackground),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(32.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .background(PrimaryBlue.copy(alpha = 0.1f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Description,
+                                    contentDescription = null,
+                                    tint = PrimaryBlue,
+                                    modifier = Modifier.size(36.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Text(
+                                text = "📘 No Notes Yet",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = TextDark
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Create your first smart note to begin organizing your curriculum modules.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextMuted,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Button(
+                                onClick = { /* Direct database insertion trigger later */ },
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Create Note", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 📅 Planner Workspace
                 composable(Screen.Planner.route) { TemporaryScreenPlaceholder("📅 Study Planner View") }
+
+                // 🤖 AI Assistant Workspace
                 composable(Screen.AIAssistant.route) { TemporaryScreenPlaceholder("🤖 AI Assistant Chat View") }
+
+                // 👤 Profile Destinies
                 composable(Screen.Profile.route) { ProfileScreen() }
                 composable(Screen.EditProfile.route) { TemporaryScreenPlaceholder("✏️ Edit Profile Detail View Screen") }
             }
