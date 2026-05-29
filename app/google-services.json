@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "202328865144",
+    "project_id": "smartstudyai-d2f08",
+    "storage_bucket": "smartstudyai-d2f08.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:202328865144:android:03776b4224fe4aff7c708d",
+        "android_client_info": {
+          "package_name": "com.example.smartstudyai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "202328865144-edq70fg4l2jqfsqiao0bdmpdplse65jr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smartstudyai",
+            "certificate_hash": "97fccc734396a3df747446d9be4bdb9f12e86623"
+          }
+        },
+        {
+          "client_id": "202328865144-a392dhb3erg82p3ttlvfhpevsa6d7118.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeU7h3fqStpOUCTG2YCe0iafryMw1GR-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "202328865144-a392dhb3erg82p3ttlvfhpevsa6d7118.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

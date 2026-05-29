@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.smartstudyai" />
+                  <option name="mobileSdkAppId" value="1:202328865144:android:03776b4224fe4aff7c708d" />
+                  <option name="projectId" value="smartstudyai-d2f08" />
+                  <option name="projectNumber" value="202328865144" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
