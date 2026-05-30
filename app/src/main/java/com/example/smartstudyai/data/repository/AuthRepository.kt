@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface AuthRepository {
     // 🔍 Exposes the active user session token state dynamically
     val currentUser: FirebaseUser?
-    val isUserLoggedIn: Flow<Boolean>
+    val userFlow: Flow<FirebaseUser?>
 
     // 🔐 Task 4 Framework Authentication Operations
     suspend fun loginWithEmailAndPassword(email: String, password: String): Result<FirebaseUser>

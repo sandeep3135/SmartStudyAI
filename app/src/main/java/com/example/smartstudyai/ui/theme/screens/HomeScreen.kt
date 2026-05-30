@@ -1,34 +1,54 @@
 package com.example.smartstudyai.ui.theme.screens
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.smartstudyai.navigation.Screen
 import com.example.smartstudyai.ui.theme.*
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.example.smartstudyai.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(onFabClick: () -> Unit = {}, onMenuClick: () -> Unit = {}) {
+fun HomeScreen(
+    onFabClick: () -> Unit = {},
+    navController: NavController,
+    onOpenDrawer: () -> Unit = {}, // 🚪 Callback to trigger the global scaffold drawer
+    authViewModel: AuthViewModel = viewModel(),
+) {
+    // 🛰️ Observe the live backend state changes dynamically
+    val user by authViewModel.user.collectAsState()
+
+    // 🧠 FIXED: Dynamically tracks the username for the greeting
+    val dynamicGreetingName = remember(user, user?.displayName) {
+        user?.displayName?.substringBefore(" ")?.takeIf { it.isNotBlank() } ?: "Student"
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -38,10 +58,10 @@ fun HomeScreen(onFabClick: () -> Unit = {}, onMenuClick: () -> Unit = {}) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 90.dp), // #1: Extra bottom breathing space
-            verticalArrangement = Arrangement.spacedBy(24.dp) // #1: Increased whitespace separation between sections
+            contentPadding = PaddingValues(top = 16.dp, bottom = 90.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // 👤 1. RESTORED USER PROFILE ROW WITH ELEVATED RIGHT TRIGGER MENU BADGE
+            // 👤 1. DYNAMIC USER PROFILE ROW WITH ELEVATED DRAWER MENU BADGE
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -52,7 +72,6 @@ fun HomeScreen(onFabClick: () -> Unit = {}, onMenuClick: () -> Unit = {}) {
                         modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // ✅ PERFECTLY RESTORED: Profile Person badge icon returns to its rightful left corner spot
                         Box(
                             modifier = Modifier
                                 .size(46.dp)
@@ -69,7 +88,7 @@ fun HomeScreen(onFabClick: () -> Unit = {}, onMenuClick: () -> Unit = {}) {
                         Spacer(modifier = Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Welcome Back, Sandeep",
+                                text = "Welcome Back, $dynamicGreetingName",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = TextDark,
@@ -87,209 +106,208 @@ fun HomeScreen(onFabClick: () -> Unit = {}, onMenuClick: () -> Unit = {}) {
                         }
                     }
 
-                    // ✅ PREMIUM UPGRADE: Elevated Staggered Hamburger Card on the right margin corner
+                    // Hamburger Drawer Slide Menu Trigger
                     Box(
                         modifier = Modifier
                             .size(40.dp)
                             .shadow(2.dp, RoundedCornerShape(12.dp))
                             .background(Color.White, RoundedCornerShape(12.dp))
-                            .clickable { onMenuClick() },
+                            .clickable { onOpenDrawer() }, // ✅ FIXED: Invokes global scaffold drawer
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.MenuOpen,
+                            imageVector = Icons.AutoMirrored.Filled.MenuOpen,
                             contentDescription = "Open Slide Menu",
                             tint = PrimaryBlue,
                             modifier = Modifier
                                 .size(22.dp)
-                                .background(Color.Transparent) // Force transparency to prevent raw white box clipping
+                                .background(Color.Transparent)
                         )
                     }
                 }
             }
 
-            // 💡 2. SMART INSIGHT WIDGET
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = PrimaryContainer.copy(alpha = 0.6f)),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Lightbulb, contentDescription = "Insight", tint = PrimaryBlue)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Smart Insight: You study best between 7PM–9PM!",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = PrimaryBlue,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            }
-
-            // 🎯 3. UPGRADED DAILY GOAL SECTION WITH STATUS MOTIVATION (#4)
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(16.dp)),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("🎯 Daily Study Goal", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDark)
-                            }
-                            Text("60%", color = PrimaryBlue, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleMedium)
+                // 💡 2. SMART INSIGHT WIDGET
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = PrimaryContainer.copy(alpha = 0.6f)),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Lightbulb, contentDescription = "Insight", tint = PrimaryBlue)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Smart Insight: You study best between 7PM–9PM!",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = PrimaryBlue,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
+                    }
+                }
+
+                // 🎯 3. DAILY GOAL SECTION WITH STATUS MOTIVATION
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(16.dp)),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(18.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("🎯 Daily Study Goal", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDark)
+                                }
+                                Text("60%", color = PrimaryBlue, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleMedium)
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            LinearProgressIndicator(
+                                progress = { 0.6f },
+                                modifier = Modifier.fillMaxWidth().height(10.dp),
+                                color = PrimaryBlue,
+                                trackColor = AppBackground
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text("🔥 You're 60% toward today's goal! 2 tasks remaining.", style = MaterialTheme.typography.bodyMedium, color = PrimaryBlue, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
+
+                // 📂 4. QUICK ACTIONS ROW MODULE
+                item {
+                    Column {
+                        Text("⚡ Quick Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDark)
                         Spacer(modifier = Modifier.height(12.dp))
-                        LinearProgressIndicator(
-                            progress = { 0.6f },
-                            modifier = Modifier.fillMaxWidth().height(10.dp), // Thicker, cleaner progress presentation
-                            color = PrimaryBlue,
-                            trackColor = AppBackground
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            QuickActionItem(icon = Icons.Default.UploadFile, label = "Upload PDF")
+                            QuickActionItem(icon = Icons.AutoMirrored.Filled.NoteAdd, label = "Add Note")
+                            QuickActionItem(icon = Icons.Default.AddTask, label = "Add Task")
+                            QuickActionItem(icon = Icons.Default.Psychology, label = "Ask AI")
+                        }
+                    }
+                }
+
+                // 📊 5. THREE-COLUMN METRICS WITH NEW STUDY TIME CARD
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Text("📊 Daily Metrics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDark)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            MetricCard(modifier = Modifier.weight(1f), title = "Attendance", score = "85%", label = "📈 Up 5%", iconColor = PriorityLow)
+                            MetricCard(modifier = Modifier.weight(1f), title = "Pending", score = "4 Left", label = "⏰ Due Today", iconColor = PriorityHigh)
+                            MetricCard(modifier = Modifier.weight(1f), title = "Study Time", score = "2h 45m", label = "⚡ Productive", iconColor = PrimaryBlue)
+                        }
+                    }
+                }
+
+                // 📅 6. UPCOMING TASKS PANEL WITH ENHANCED CARD SPACING
+                item {
+                    Column {
+                        Text("📅 Upcoming Tasks", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDark)
                         Spacer(modifier = Modifier.height(10.dp))
-                        Text("🔥 You're 60% toward today's goal! 2 tasks remaining.", style = MaterialTheme.typography.bodyMedium, color = PrimaryBlue, fontWeight = FontWeight.Medium)
-                    }
-                }
-            }
 
-            // 📂 4. NEW QUICK ACTIONS ROW MODULE (#6)
-            item {
-                Column {
-                    Text("⚡ Quick Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDark)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        QuickActionItem(icon = Icons.Default.UploadFile, label = "Upload PDF")
-                        QuickActionItem(icon = Icons.AutoMirrored.Filled.NoteAdd, label = "Add Note")
-                        QuickActionItem(icon = Icons.Default.AddTask, label = "Add Task")
-                        QuickActionItem(icon = Icons.Default.Psychology, label = "Ask AI")
-                    }
-                }
-            }
-
-            // 📊 5. THREE-COLUMN METRICS WITH NEW STUDY TIME CARD (#3)
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Text("📊 Daily Metrics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDark)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        MetricCard(modifier = Modifier.weight(1f), title = "Attendance", score = "85%", label = "📈 Up 5%", iconColor = PriorityLow)
-                        MetricCard(modifier = Modifier.weight(1f), title = "Pending", score = "4 Left", label = "⏰ Due Today", iconColor = PriorityHigh)
-                        MetricCard(modifier = Modifier.weight(1f), title = "Study Time", score = "2h 45m", label = "⚡ Productive", iconColor = PrimaryBlue)
-                    }
-                }
-            }
-
-            // 📅 6. UPCOMING TASKS PANEL WITH ENHANCED CARD SPACING (#1)
-            item {
-                Column {
-                    Text("📅 Upcoming Tasks", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDark)
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { // #1: Better breathing space between single list rows
-                        TaskRow(title = "Revise DBMS Chapter 3", priorityColor = PriorityHigh, priorityLabel = "High")
-                        TaskRow(title = "Complete Compiler Assignment", priorityColor = PriorityMedium, priorityLabel = "Medium")
-                        TaskRow(title = "Prepare Quiz Notes", priorityColor = PriorityLow, priorityLabel = "Low")
-                    }
-                }
-            }
-
-            // ✨ 7. AI SECTION WITH STRONG HIGH-CONTRAST ACTION CTA BUTTONS (#5)
-            item {
-                val aiGradient = Brush.horizontalGradient(listOf(Color(0xFF4F46E5), Color(0xFF7C3AED)))
-                Card(
-                    modifier = Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(18.dp)),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .background(aiGradient)
-                            .padding(20.dp)
-                            .fillMaxWidth()
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = Color.White, modifier = Modifier.size(24.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("✨ AI Engine Workspace", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            TaskRow(title = "Revise DBMS Chapter 3", priorityColor = PriorityHigh, priorityLabel = "High")
+                            TaskRow(title = "Complete Compiler Assignment", priorityColor = PriorityMedium, priorityLabel = "Medium")
+                            TaskRow(title = "Prepare Quiz Notes", priorityColor = PriorityLow, priorityLabel = "Low")
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("Summarize your course modules or instantly generate dynamic mock quizzes.", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Button(
-                                onClick = {},
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.weight(1f).shadow(2.dp, RoundedCornerShape(10.dp))
-                            ) {
-                                Text("AI Summarizer", color = TextDark, fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+
+                // ✨ 7. AI SECTION WITH STRONG HIGH-CONTRAST ACTION CTA BUTTONS
+                item {
+                    val aiGradient = Brush.horizontalGradient(listOf(Color(0xFF4F46E5), Color(0xFF7C3AED)))
+                    Card(
+                        modifier = Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(18.dp)),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .background(aiGradient)
+                                .padding(20.dp)
+                                .fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = Color.White, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("✨ AI Engine Workspace", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                             }
-                            Button(
-                                onClick = {},
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.weight(1f).shadow(2.dp, RoundedCornerShape(10.dp))
-                            ) {
-                                Text("Generate Quiz", color = TextDark, fontWeight = FontWeight.ExtraBold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Summarize your course modules or instantly generate dynamic mock quizzes.", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Button(
+                                    onClick = {},
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.weight(1f).shadow(2.dp, RoundedCornerShape(10.dp))
+                                ) {
+                                    Text("AI Summarizer", color = TextDark, fontWeight = FontWeight.ExtraBold)
+                                }
+                                Button(
+                                    onClick = {},
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.weight(1f).shadow(2.dp, RoundedCornerShape(10.dp))
+                                ) {
+                                    Text("Generate Quiz", color = TextDark, fontWeight = FontWeight.ExtraBold)
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        // ➕ 8. FLOATING ACTION BUTTON WITH LIFECYCLE SPRING ANIMATIONS
-        val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-        val isPressed by interactionSource.collectIsPressedAsState()
+            // ➕ 8. FLOATING ACTION BUTTON WITH LIFECYCLE SPRING ANIMATIONS
+            val interactionSource = remember { MutableInteractionSource() }
+            val isPressed by interactionSource.collectIsPressedAsState()
 
-        // Dynamic scale physics multiplier calculations
-        val fabScale by androidx.compose.animation.core.animateFloatAsState(
-            targetValue = if (isPressed) 1.15f else 1.0f, // Upscales cleanly by 15% when pressed!
-            animationSpec = androidx.compose.animation.core.spring(
-                dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
-                stiffness = androidx.compose.animation.core.Spring.StiffnessLow
-            ),
-            label = "FabScaleAnimation"
-        )
+            val fabScale by animateFloatAsState(
+                targetValue = if (isPressed) 1.15f else 1.0f,
+                animationSpec = androidx.compose.animation.core.spring(
+                    dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                    stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                ),
+                label = "FabScaleAnimation"
+            )
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 20.dp)
-        ) {
-            FloatingActionButton(
-                onClick = onFabClick,
-                interactionSource = interactionSource, // Feeds click events directly to our spring animation calculator
-                containerColor = PrimaryBlue,
-                contentColor = Color.White,
-                shape = CircleShape,
+            Box(
                 modifier = Modifier
-                    .size(56.dp)
-                    .graphicsLayer(
-                        scaleX = fabScale, // Controls horizontal width expansion dynamically
-                        scaleY = fabScale  // Controls vertical height expansion dynamically
-                    )
-                    .shadow(elevation = if (isPressed) 12.dp else 4.dp, shape = CircleShape) // Drop shadow deepens dynamically
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 20.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Quick Action Fab",
-                    modifier = Modifier.size(26.dp)
-                )
+                FloatingActionButton(
+                    onClick = onFabClick,
+                    interactionSource = interactionSource,
+                    containerColor = PrimaryBlue,
+                    contentColor = Color.White,
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .graphicsLayer(
+                            scaleX = fabScale,
+                            scaleY = fabScale
+                        )
+                        .shadow(elevation = if (isPressed) 12.dp else 4.dp, shape = CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Quick Action Fab",
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
             }
         }
-    }
 }
 
-// Custom Reusable Sub-Component for Quick Action Items (#6) - PREMIUM ALIGNED EDITION
+// Custom Reusable Sub-Component for Quick Action Items - PREMIUM ALIGNED EDITION
 @Composable
 fun QuickActionItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
     Column(
@@ -301,8 +319,8 @@ fun QuickActionItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label
         Box(
             modifier = Modifier
                 .size(54.dp)
-                .shadow(2.dp, RoundedCornerShape(14.dp)) // Added clean uniform shadow depth drop
-                .background(Color.White, RoundedCornerShape(14.dp)), // Unified solid premium card base surface
+                .shadow(2.dp, RoundedCornerShape(14.dp))
+                .background(Color.White, RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -311,10 +329,10 @@ fun QuickActionItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label
                 tint = PrimaryBlue,
                 modifier = Modifier
                     .size(24.dp)
-                    .background(Color.Transparent) // Completely eliminates separate box clipping lines
+                    .background(Color.Transparent)
             )
         }
-        Spacer(modifier = Modifier.height(8.dp)) // Sleek whitespace breathing space
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,

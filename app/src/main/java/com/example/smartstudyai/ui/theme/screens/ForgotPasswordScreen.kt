@@ -21,8 +21,10 @@ import com.example.smartstudyai.ui.theme.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
-    onNavigateBackToLogin: () -> Unit = {}
+    onNavigateBackToLogin: () -> Unit = {},
+    authViewModel: com.example.smartstudyai.viewmodel.AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    val uiState = authViewModel.uiState
     // 📝 Local Input State
     var email by remember { mutableStateOf("") }
 
@@ -92,17 +94,18 @@ fun ForgotPasswordScreen(
             }
 
             // 🎉 Success Confirmation Box
-            if (successMessage != null) {
+            // 📧 Show success messages dispatched from the backend server
+            if (uiState.successMessage != null) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)) // Light mint premium background tint
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F2FE)) // Light Blue premium feedback container
                 ) {
                     Text(
-                        text = successMessage!!,
-                        color = Color(0xFF2E7D32), // Dark emerald green font
+                        text = uiState.successMessage,
+                        color = PrimaryBlue,
+                        modifier = Modifier.padding(12.dp),
                         style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(12.dp)
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -130,37 +133,30 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // 🚀 Action Button with verified layout modifier
+            val cooldown = authViewModel.resetCooldownTime
+
             Button(
                 onClick = {
                     if (email.isBlank()) {
-                        errorMessage = "Please enter your email address."
+                        errorMessage = "Please enter your email address to recover your password account."
                     } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                         errorMessage = "Please enter a valid email address."
                     } else {
-                        isLoading = true
                         errorMessage = null
-                        // Firebase password reset trigger will be added here in Task 4️⃣!
+                        authViewModel.resetPassword(email)
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                 shape = RoundedCornerShape(12.dp),
-                enabled = !isLoading
+                enabled = !uiState.isLoading && cooldown == 0 // Lock button if countdown timer active
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White,
-                        strokeWidth = 2.5.dp
-                    )
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                } else if (cooldown > 0) {
+                    Text(text = "Retry in ${cooldown}s", fontWeight = FontWeight.Bold) // Premium security tracking feedback signature
                 } else {
-                    Text(
-                        text = "Send Reset Link",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = "Reset Password", fontWeight = FontWeight.Bold)
                 }
             }
         }

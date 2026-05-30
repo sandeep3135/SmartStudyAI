@@ -17,9 +17,9 @@ class AuthRepositoryImpl(
     override val currentUser: FirebaseUser?
         get() = firebaseAuth.currentUser
 
-    override val isUserLoggedIn: Flow<Boolean> = callbackFlow {
+    override val userFlow: Flow<FirebaseUser?> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { auth ->
-            trySend(auth.currentUser != null)
+            trySend(auth.currentUser)
         }
         firebaseAuth.addAuthStateListener(listener)
         awaitClose { firebaseAuth.removeAuthStateListener(listener) }
@@ -42,13 +42,16 @@ class AuthRepositoryImpl(
             val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             val user = result.user ?: throw Exception("Registration session engine failed.")
 
-            // Push full name payload data instantly inside cloud token reference profile
+            // Push full name payload data inside cloud token reference profile
             val profileUpdates = UserProfileChangeRequest.Builder()
                 .setDisplayName(name)
                 .build()
             user.updateProfile(profileUpdates).await()
 
-            Result.success(user)
+            // 🔄 FORCE REFRESH: Fetch the newly updated profile name payload from the server right now!
+            user.reload().await()
+
+            Result.success(firebaseAuth.currentUser ?: user)
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -1,5 +1,6 @@
 package com.example.smartstudyai
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,6 +19,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // 🧠 Access persistent Android storage preferences
+        val sharedPreferences = getSharedPreferences("smart_study_prefs", Context.MODE_PRIVATE)
+
         setContent {
             SmartStudyAITheme {
                 // Central App state orchestration router variable holder
@@ -26,11 +31,21 @@ class MainActivity : ComponentActivity() {
                 when (currentAppState) {
                     AppAuthState.SPLASH -> {
                         SplashScreen(onSplashComplete = {
-                            currentAppState = AppAuthState.ONBOARDING
+                            // 🔍 Check if this is the user's first time opening the application
+                            val isFirstTime = sharedPreferences.getBoolean("is_first_time_user", true)
+
+                            if (isFirstTime) {
+                                currentAppState = AppAuthState.ONBOARDING
+                            } else {
+                                currentAppState = AppAuthState.MAIN_DASHBOARD
+                            }
                         })
                     }
                     AppAuthState.ONBOARDING -> {
                         OnboardingScreen(onOnboardingComplete = {
+                            // 💾 Save state preference flag to disk persistently so onboarding is skipped forever
+                            sharedPreferences.edit().putBoolean("is_first_time_user", false).apply()
+
                             currentAppState = AppAuthState.MAIN_DASHBOARD
                         })
                     }

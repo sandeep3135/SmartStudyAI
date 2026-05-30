@@ -10,6 +10,7 @@ import com.example.smartstudyai.data.repository.AuthRepositoryImpl
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -26,16 +27,29 @@ class AuthViewModel(
 ) : ViewModel() {
 
     // 🔄 Reactive dynamic stream tracking user session persistence status globally
-    val isUserLoggedIn: StateFlow<Boolean> = repository.isUserLoggedIn
+    val user: StateFlow<FirebaseUser?> = repository.userFlow
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
+            initialValue = repository.currentUser
+        )
+
+    val isUserLoggedIn: StateFlow<Boolean?> = user
+        .map { it != null }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = if (repository.currentUser != null) true else null
         )
 
     // 📝 Single source of state truth for your login/signup forms
     var uiState by mutableStateOf(AuthUiState())
         private set
+
+    var resetCooldownTime by mutableStateOf(0)
+        private set
+
+    private var timerJob: kotlinx.coroutines.Job? = null
 
     // 🔑 Core Operation 1: Sign In Engine
     fun signIn(email: String, password: String, onSuccess: () -> Unit) {
@@ -45,7 +59,7 @@ class AuthViewModel(
             uiState = result.fold(
                 onSuccess = { authenticatedUser ->
                     onSuccess()
-                    uiState.copy(isLoading = false, user = authenticatedUser)
+                    uiState.copy(isLoading = false)
                 },
                 onFailure = { error ->
                     uiState.copy(isLoading = false, errorMessage = error.localizedMessage ?: "Invalid email or password.")
@@ -62,7 +76,7 @@ class AuthViewModel(
             uiState = result.fold(
                 onSuccess = { registeredUser ->
                     onSuccess()
-                    uiState.copy(isLoading = false, user = registeredUser)
+                    uiState.copy(isLoading = false)
                 },
                 onFailure = { error ->
                     uiState.copy(isLoading = false, errorMessage = error.localizedMessage ?: "Registration failed. Try again.")
@@ -73,17 +87,32 @@ class AuthViewModel(
 
     // 🔒 Core Operation 3: Identity Verification Recovery
     fun resetPassword(email: String) {
+        if (resetCooldownTime > 0) return // Reject request if cooldown is active
+
         viewModelScope.launch {
             uiState = uiState.copy(isLoading = true, errorMessage = null, successMessage = null)
             val result = repository.sendPasswordResetEmail(email)
             uiState = result.fold(
                 onSuccess = {
+                    // Start a secure 60-second mechanical structural timer loop
+                    startResetTimer()
                     uiState.copy(isLoading = false, successMessage = "A secure verification reset link has been dispatched to your inbox!")
                 },
                 onFailure = { error ->
                     uiState.copy(isLoading = false, errorMessage = error.localizedMessage ?: "Failed to transmit recovery email.")
                 }
             )
+        }
+    }
+
+    private fun startResetTimer() {
+        timerJob?.cancel()
+        resetCooldownTime = 60
+        timerJob = viewModelScope.launch {
+            while (resetCooldownTime > 0) {
+                kotlinx.coroutines.delay(1000)
+                resetCooldownTime--
+            }
         }
     }
 
@@ -95,7 +124,7 @@ class AuthViewModel(
             uiState = result.fold(
                 onSuccess = { googleUser ->
                     onSuccess()
-                    uiState.copy(isLoading = false, user = googleUser)
+                    uiState.copy(isLoading = false)
                 },
                 onFailure = { error ->
                     uiState.copy(isLoading = false, errorMessage = error.localizedMessage ?: "Google Sign-In authentication rejected.")

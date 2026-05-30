@@ -33,10 +33,55 @@ fun MainScaffold() {
     // ⚡ Initialize our global Auth State Machine Engine
     val authViewModel: AuthViewModel = viewModel()
     val isUserLoggedIn by authViewModel.isUserLoggedIn.collectAsState()
-    val currentUserName = authViewModel.uiState.user?.displayName ?: "Guest Student"
+    val user by authViewModel.user.collectAsState()
+    val uiState = authViewModel.uiState
+
+    // 🕒 Prevent flickering during initial auth state resolution
+    if (isUserLoggedIn == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = PrimaryBlue)
+        }
+        return
+    }
+
+    // 🧠 FIXED: Tracks the reactive 'user' StateFlow from AuthViewModel for name changes
+    val currentUserName = remember(user, user?.displayName) {
+        user?.displayName?.takeIf { it.isNotBlank() } ?: "Smart Student"
+    }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+
+    // 🔒 Fix: Automatically close the side drawer whenever the navigation route target shifts
+    LaunchedEffect(currentRoute) {
+        scope.launch { drawerState.close() }
+    }
+
+    // 🚀 Navigation Gatekeeper: Syncs navigation state with authentication status
+    LaunchedEffect(isUserLoggedIn) {
+        if (isUserLoggedIn == true) {
+            // If we just logged in or app started with user, go home and clear auth stack
+            if (navController.currentDestination?.route != Screen.Home.route) {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        } else if (isUserLoggedIn == false) {
+            // If we logged out, force return to login
+            if (navController.currentDestination?.route != Screen.Login.route &&
+                navController.currentDestination?.route != Screen.Signup.route &&
+                navController.currentDestination?.route != Screen.ForgotPassword.route) {
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
 
     val menuItems = listOf(
         Triple(Screen.Home.route, Icons.Default.Dashboard, "Dashboard"),
@@ -50,13 +95,14 @@ fun MainScaffold() {
             currentRoute == Screen.Signup.route ||
             currentRoute == Screen.ForgotPassword.route
 
+    // 🛠️ Structural visibility rule: Show navigation drawer/bars across all landing dashboard fragments
+    val shouldShowNavigationStructures = !isAuthScreen && isUserLoggedIn == true && currentRoute != null
+
     ModalNavigationDrawer(
         drawerState = drawerState,
-        // Disable drawer gestures if the user is on an authentication screen
-        gesturesEnabled = !isAuthScreen && isUserLoggedIn,
+        gesturesEnabled = shouldShowNavigationStructures, // Watch strict routing rules
         drawerContent = {
-            // Only render drawer content if the user is logged in and not on an auth screen
-            if (!isAuthScreen && isUserLoggedIn) {
+            if (shouldShowNavigationStructures) {
                 ModalDrawerSheet(
                     drawerContainerColor = AppBackground,
                     modifier = Modifier.width(320.dp),
@@ -186,8 +232,7 @@ fun MainScaffold() {
     ) {
         Scaffold(
             bottomBar = {
-                // 🔒 Hide Bottom Navigation Bar completely if user is on an Authentication screen
-                if (!isAuthScreen && isUserLoggedIn) {
+                if (shouldShowNavigationStructures) {
                     NavigationBar(
                         containerColor = Color.White,
                         tonalElevation = 8.dp,
@@ -235,11 +280,9 @@ fun MainScaffold() {
         ) { paddingValues ->
             NavHost(
                 navController = navController,
-                // 🔒 GATEKEEPER LOGIC: Dynamic routing destination based on runtime session tokens
-                startDestination = if (isUserLoggedIn) Screen.Home.route else Screen.Login.route,
+                startDestination = if (isUserLoggedIn == true) Screen.Home.route else Screen.Login.route,
                 modifier = Modifier.padding(paddingValues)
             ) {
-                // 🔑 Destination 1: Premium Login View Screen
                 composable(Screen.Login.route) {
                     LoginScreen(
                         onNavigateToSignup = {
@@ -250,26 +293,20 @@ fun MainScaffold() {
                             authViewModel.clearErrorMessages()
                             navController.navigate(Screen.ForgotPassword.route)
                         },
-                        onLoginSuccess = {
-                            // Handled automatically via global state stream collector
-                        }
+                        onLoginSuccess = {}
                     )
                 }
 
-                // 📝 Destination 2: Account Registration View Screen
                 composable(Screen.Signup.route) {
                     SignupScreen(
                         onNavigateToLogin = {
                             authViewModel.clearErrorMessages()
                             navController.navigate(Screen.Login.route)
                         },
-                        onSignupSuccess = {
-                            // Handled dynamically via cloud state collector flow stream
-                        }
+                        onSignupSuccess = {}
                     )
                 }
 
-                // 🔒 Destination 3: Recovery Password Verification View Screen
                 composable(Screen.ForgotPassword.route) {
                     ForgotPasswordScreen(
                         onNavigateBackToLogin = {
@@ -283,11 +320,12 @@ fun MainScaffold() {
                 composable(Screen.Home.route) {
                     HomeScreen(
                         onFabClick = { /* Handle FAB Action */ },
-                        onMenuClick = { scope.launch { drawerState.open() } }
+                        navController = navController,
+                        onOpenDrawer = { scope.launch { drawerState.open() } },
+                        authViewModel = authViewModel
                     )
                 }
 
-                // 📝 Notes Workspace with Premium Empty State Injection
                 composable(Screen.Notes.route) {
                     Box(
                         modifier = Modifier
@@ -327,30 +365,12 @@ fun MainScaffold() {
                                 color = TextMuted,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Button(
-                                onClick = { /* Direct database insertion trigger later */ },
-                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                                shape = RoundedCornerShape(12.dp),
-                                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Create Note", fontWeight = FontWeight.Bold)
-                                }
-                            }
                         }
                     }
                 }
 
-                // 📅 Planner Workspace
                 composable(Screen.Planner.route) { TemporaryScreenPlaceholder("📅 Study Planner View") }
-
-                // 🤖 AI Assistant Workspace
                 composable(Screen.AIAssistant.route) { TemporaryScreenPlaceholder("🤖 AI Assistant Chat View") }
-
-                // 👤 Profile Destinies
                 composable(Screen.Profile.route) { ProfileScreen() }
                 composable(Screen.EditProfile.route) { TemporaryScreenPlaceholder("✏️ Edit Profile Detail View Screen") }
             }
@@ -360,10 +380,10 @@ fun MainScaffold() {
 
 @Composable
 fun TemporaryScreenPlaceholder(text: String) {
-    androidx.compose.foundation.layout.Box(
+    Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center
+        contentAlignment = Alignment.Center
     ) {
-        Text(text = text, style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
+        Text(text = text, style = MaterialTheme.typography.titleLarge)
     }
 }
